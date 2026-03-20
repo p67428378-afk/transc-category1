@@ -1,19 +1,16 @@
 import sqlite3
-from flask import g
+from flask import g, current_app
 
 DATABASE = None
 
-def get_db_connection(database_path=None):
-    global DATABASE
-    if database_path is None:
-        database_path = DATABASE
-    
-    conn = sqlite3.connect(database_path)
-    conn.row_factory = sqlite3.Row
-    return conn
+def get_db_connection():
+    if 'db' not in g:
+        g.db = sqlite3.connect(current_app.config['DATABASE'])
+        g.db.row_factory = sqlite3.Row
+    return g.db
 
-def init_db(database_path=None):
-    conn = get_db_connection(database_path)
+def init_db():
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS transactions (
@@ -26,24 +23,33 @@ def init_db(database_path=None):
         );
     """)
     conn.commit()
-    return conn # Return the connection for further use, especially in tests
 
 def close_db(e=None):
     db = g.pop('db', None)
     if db is not None:
         db.close()
 
-def init_app(app, database_path='transactions.db'):
-    global DATABASE
-    DATABASE = database_path
+def init_app(app):
+    app.config.setdefault('DATABASE', 'transactions.db')
     app.teardown_appcontext(close_db)
     with app.app_context():
-        conn = init_db(database_path)
-        conn.close() # Close the connection after initialization in app context
+        init_db()
 
 if __name__ == '__main__':
     # This part is for standalone database initialization, not used by Flask app
     # For standalone use, we still want to close the connection
-    conn = init_db('transactions.db')
+    conn = sqlite3.connect('transactions.db')
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            merchant TEXT NOT NULL,
+            amount REAL NOT NULL,
+            description TEXT,
+            category TEXT
+        );
+    """)
+    conn.commit()
     conn.close()
     print("Database initialized.")
