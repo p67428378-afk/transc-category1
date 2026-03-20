@@ -6,7 +6,8 @@ from .database import init_app, get_db_connection, init_db
 def app():
     app = Flask(__name__)
     app.config['TESTING'] = True
-    init_app(app, ':memory:') # Use in-memory database for testing
+    app.config['DATABASE'] = ':memory:' # Set the database path for testing
+    init_app(app) # Call init_app with only the app argument
     yield app
 
 @pytest.fixture
