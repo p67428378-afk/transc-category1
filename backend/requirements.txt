@@ -1,1 +1,5 @@
 Flask
+gunicorn
+sqlite3
+python-dotenv
+pandas
