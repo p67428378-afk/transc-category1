@@ -10,6 +10,10 @@ def app():
     app.config['DATABASE'] = ':memory:' # Use in-memory database for testing
     init_app(app) # Initialize the app with the database config
     
+    with app.app_context(): # Establish an app context for the fixture
+        get_db_connection() # Ensure g.db is populated with the in-memory connection
+        init_db() # Explicitly call init_db to create tables in the in-memory db
+    
     yield app # Yield the app for tests to use
 
 @pytest.fixture
@@ -21,8 +25,8 @@ def runner(app):
     return app.test_cli_runner()
 
 def test_database_initialization(app):
-    with app.app_context():
-        conn = get_db_connection() # This will now trigger init_db() if not already done
+    with app.app_context(): # This will use the same app context as the fixture
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='transactions';")
         table_exists = cursor.fetchone()
