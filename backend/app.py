@@ -1,5 +1,5 @@
 from flask import Flask, g, request, jsonify
-from .database import get_db_connection, init_app # Import init_app
+from .database import get_db_connection, init_app # Removed DATABASE, close_db
 
 app = Flask(__name__)
 
@@ -7,9 +7,7 @@ app = Flask(__name__)
 init_app(app)
 
 def get_db():
-    if 'db' not in g:
-        g.db = get_db_connection() # No need to pass DATABASE here, it's global in database.py
-    return g.db
+    return get_db_connection()
 
 @app.route('/api/transactions/upload', methods=['POST'])
 def upload_transactions():
