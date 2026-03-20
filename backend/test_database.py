@@ -1,6 +1,6 @@
 import pytest
 from flask import Flask, g
-import sqlite3 # Import sqlite3 for creating in-memory connection
+import sqlite3
 from .database import init_app, get_db_connection, init_db, close_db
 
 @pytest.fixture
@@ -11,8 +11,8 @@ def app():
     init_app(app) # Initialize the app with the database config
     
     with app.app_context(): # Establish an app context for the fixture
-        get_db_connection() # Ensure g.db is populated with the in-memory connection
-        init_db() # Explicitly call init_db to create tables in the in-memory db
+        conn = get_db_connection() # This will populate g.db
+        init_db(conn) # Pass the connection to init_db
     
     yield app # Yield the app for tests to use
 
@@ -25,7 +25,7 @@ def runner(app):
     return app.test_cli_runner()
 
 def test_database_initialization(app):
-    with app.app_context(): # This will use the same app context as the fixture
+    with app.app_context():
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='transactions';")
