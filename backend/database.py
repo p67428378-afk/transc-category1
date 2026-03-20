@@ -27,15 +27,9 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
-def init_app(app, test_db_connection=None):
+def init_app(app):
     app.config.setdefault('DATABASE', 'transactions.db')
     app.teardown_appcontext(close_db)
-    with app.app_context():
-        if test_db_connection:
-            g.db = test_db_connection
-            init_db()
-        else:
-            init_db()
 
 if __name__ == '__main__':
     conn = sqlite3.connect('transactions.db')
