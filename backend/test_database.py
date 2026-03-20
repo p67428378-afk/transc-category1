@@ -7,17 +7,13 @@ from .database import init_app, get_db_connection, init_db, close_db
 def app():
     app = Flask(__name__)
     app.config['TESTING'] = True
+    app.config['DATABASE'] = ':memory:' # Set the database path for testing
+    init_app(app) # Initialize the app with the database config
     
-    # Create a single in-memory database connection for the test suite
-    test_conn = sqlite3.connect(':memory:')
-    test_conn.row_factory = sqlite3.Row
-
-    init_app(app, test_db_connection=test_conn) # Pass the test connection to init_app
+    with app.app_context(): # Establish an app context for the fixture
+        init_db() # Initialize the database within this context
     
-    yield app
-    
-    # Ensure the test connection is closed after tests
-    test_conn.close()
+    yield app # Yield the app for tests to use
 
 @pytest.fixture
 def client(app):
@@ -28,8 +24,8 @@ def runner(app):
     return app.test_cli_runner()
 
 def test_database_initialization(app):
-    with app.app_context():
-        conn = get_db_connection() # This will now return the test_conn
+    with app.app_context(): # This will use the same app context as the fixture
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='transactions';")
         table_exists = cursor.fetchone()
