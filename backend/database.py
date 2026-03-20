@@ -1,8 +1,6 @@
 import sqlite3
 from flask import g, current_app
 
-DATABASE = None
-
 def get_db_connection():
     if 'db' not in g:
         g.db = sqlite3.connect(current_app.config['DATABASE'])
@@ -29,15 +27,17 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
-def init_app(app):
+def init_app(app, test_db_connection=None):
     app.config.setdefault('DATABASE', 'transactions.db')
     app.teardown_appcontext(close_db)
     with app.app_context():
-        init_db()
+        if test_db_connection:
+            g.db = test_db_connection
+            init_db()
+        else:
+            init_db()
 
 if __name__ == '__main__':
-    # This part is for standalone database initialization, not used by Flask app
-    # For standalone use, we still want to close the connection
     conn = sqlite3.connect('transactions.db')
     cursor = conn.cursor()
     cursor.execute("""
