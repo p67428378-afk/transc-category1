@@ -7,10 +7,9 @@ def get_db_connection():
         g.db.row_factory = sqlite3.Row
     return g.db
 
-def init_db():
-    # This function assumes a connection is already available in g.db
-    # It should not call get_db_connection to avoid recursion
-    conn = g.db # Directly use the connection from g
+def init_db(conn=None):
+    if conn is None:
+        conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS transactions (
@@ -32,20 +31,3 @@ def close_db(e=None):
 def init_app(app):
     app.config.setdefault('DATABASE', 'transactions.db')
     app.teardown_appcontext(close_db)
-
-if __name__ == '__main__':
-    conn = sqlite3.connect('transactions.db')
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS transactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            merchant TEXT NOT NULL,
-            amount REAL NOT NULL,
-            description TEXT,
-            category TEXT
-        );
-    """)
-    conn.commit()
-    conn.close()
-    print("Database initialized.")
